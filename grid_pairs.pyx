@@ -8,7 +8,6 @@ cimport cython
 cimport numpy as np
 from libc.math cimport fabs, fmin
 import sys
-from cython.parallel cimport prange
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -51,7 +50,11 @@ def npairs(data1, data2, rbins, period=None):
     #build grids for data1 and data2
     grid1 = cube_grid(data1[0,:], data1[1,:], data1[2,:], np.max(period), np.max(rbins))
     grid2 = cube_grid(data2[0,:], data2[1,:], data2[2,:], np.max(period), np.max(rbins))
-    
+
+    # Create array for temporarily storing distance calculation results
+    # ( Currently not being used)
+    #cdef np.ndarray[np.float64_t, ndim=1] distance_holder = np.zeros(len(data1[0,:]), dtype=np.float64)
+
     #square radial bins
     crbins = crbins**2.0
     
@@ -103,6 +106,7 @@ def npairs(data1, data2, rbins, period=None):
                     dz = fmin(cperiod[2] - dz, dz)
                     d = dx*dx+dy*dy+dz*dz
 
+                    ### This step dominates the runtime
                     #calculate counts in bins
                     #k = nbins-1
                     #while d<=crbins[k]:
