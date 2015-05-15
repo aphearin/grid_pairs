@@ -48,10 +48,7 @@ def npairs(data1, data2, rbins, Lbox):
 
     #square radial bins
     crbins = crbins**2.0
-    
-    print("cell size= {0}".format(grid1.dL))
-    print("number of cells = {0}".format(grid1.num_divs**3))
-    
+        
     #more c definitions used inside loop
     cdef int i,j,icell1,icell2, k
     cdef double dx, dy, dz, d
