@@ -85,13 +85,31 @@ def npairs(data1, data2, rbins, period=None):
                                               grid1.num_divs,\
                                               grid1.num_divs))
         adj_cell_arr = grid1.adjacent_cells(ix, iy, iz)
+
+        ix2_move, x2_move = shift_subvolume(ix, grid1.num_divs, cperiod[0])
+        iy2_move, y2_move = shift_subvolume(iy, grid1.num_divs, cperiod[1])
+        iz2_move, z2_move = shift_subvolume(iz, grid1.num_divs, cperiod[2])
+
         
         #Loop over each of the 27 subvolumes neighboring, including the current cell.
         for icell2 in adj_cell_arr:
+
+            ix2, iy2, iz2 = np.unravel_index(icell2,(grid2.num_divs,\
+                                                  grid2.num_divs,\
+                                                  grid2.num_divs))
+
             #extract the points in the cell
             x_icell2 = grid2.x[grid2.slice_array[icell2]]
+            if ix2==ix2_move:
+                x_icell2 += x2_move
+
             y_icell2 = grid2.y[grid2.slice_array[icell2]]
+            if iy2==iy2_move:
+                y_icell2 += y2_move
+
             z_icell2 = grid2.z[grid2.slice_array[icell2]]
+            if iz2==iz2_move:
+                z_icell2 += z2_move
 
             #loop over points in grid1's cell
             for i in range(0,len(x_icell1)):
@@ -99,11 +117,9 @@ def npairs(data1, data2, rbins, period=None):
                 for j in range(0,len(x_icell2)):
                     #calculate the square distance
                     dx = x_icell1[i] - x_icell2[j]
-                    dx = fmin(cperiod[0] - dx, dx)
                     dy = y_icell1[i] - y_icell2[j]
-                    dy = fmin(cperiod[1] - dy, dy)
                     dz = z_icell1[i] - z_icell2[j]
-                    dz = fmin(cperiod[2] - dz, dz)
+                    
                     d = dx*dx+dy*dy+dz*dz
 
                     ### Calculate counts in bins
@@ -115,6 +131,21 @@ def npairs(data1, data2, rbins, period=None):
                         if k<0: break
 
     return counts
+
+
+def shift_subvolume(idim1, num_divs, period):
+
+    if idim1==0:
+        idim2_move = num_divs-1
+        dim2_move = -period
+    elif idim1==num_divs-1:
+        idim2_move = 0
+        dim2_move = period
+    else:
+        idim2_move = -1
+        dim2_move = 0
+
+    return idim2_move, dim2_move
 
 
 class cube_grid():
