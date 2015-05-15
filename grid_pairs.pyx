@@ -72,15 +72,15 @@ def npairs(data1, data2, rbins, Lbox):
                                         grid1.z[grid1.slice_array[icell1]])
         
         #get the list of neighboring cells
-        ix, iy, iz = np.unravel_index(icell1,(grid1.num_divs,\
+        ix1, iy1, iz1 = np.unravel_index(icell1,(grid1.num_divs,\
                                               grid1.num_divs,\
                                               grid1.num_divs))
-        adj_cell_arr = grid1.adjacent_cells(ix, iy, iz)
+        adj_cell_arr = grid1.adjacent_cells(ix1, iy1, iz1)
 
         # Compute the cells that will need to be shifted to respect PBCs
-        ix2_move, x2_move = shift_subvolume(ix, grid1.num_divs, Lbox)
-        iy2_move, y2_move = shift_subvolume(iy, grid1.num_divs, Lbox)
-        iz2_move, z2_move = shift_subvolume(iz, grid1.num_divs, Lbox)
+        ix2_move, x2_move = shift_subvolume(ix1, grid1.num_divs, Lbox)
+        iy2_move, y2_move = shift_subvolume(iy1, grid1.num_divs, Lbox)
+        iz2_move, z2_move = shift_subvolume(iz1, grid1.num_divs, Lbox)
 
         
         #Loop over each of the 27 subvolumes neighboring, including the current cell.
@@ -92,14 +92,14 @@ def npairs(data1, data2, rbins, Lbox):
 
             #extract the points in the cell
             x_icell2 = grid2.x[grid2.slice_array[icell2]]
+            y_icell2 = grid2.y[grid2.slice_array[icell2]]
+            z_icell2 = grid2.z[grid2.slice_array[icell2]]
+
+            # Shift the points, as necessary
             if ix2==ix2_move:
                 x_icell2 += x2_move
-
-            y_icell2 = grid2.y[grid2.slice_array[icell2]]
             if iy2==iy2_move:
                 y_icell2 += y2_move
-
-            z_icell2 = grid2.z[grid2.slice_array[icell2]]
             if iz2==iz2_move:
                 z_icell2 += z2_move
 
@@ -107,15 +107,14 @@ def npairs(data1, data2, rbins, Lbox):
             for i in range(0,len(x_icell1)):
                 #loop over points in grid2's cell
                 for j in range(0,len(x_icell2)):
-                    #calculate the square distance
+
+                    #calculate the square distance dsq
                     dx = x_icell1[i] - x_icell2[j]
                     dy = y_icell1[i] - y_icell2[j]
                     dz = z_icell1[i] - z_icell2[j]
-
                     dsq = dx*dx+dy*dy+dz*dz
 
                     ### Calculate counts in bins
-                    ### Simply updating the histogram dominates the runtime
                     k = nbins-1
                     while dsq<=crbins[k]:
                         counts[k] += 1
@@ -126,6 +125,32 @@ def npairs(data1, data2, rbins, Lbox):
 
 
 def shift_subvolume(idim1, num_divs, Lbox):
+    """ For a 1d index idim1 of a subvolume, compute the 
+    1d indices of subvolumes that (may) need to be shifted 
+    in order to respect PBC distances. 
+
+    Parameters 
+    ----------
+    idim1 : int 
+        1d index of a subvolume
+
+    num_divs : int 
+        Number of divisions each dimension of the box 
+        has been divided into
+
+    Lbox : float 
+        Size of the box. Defines the periodic boundary condition. 
+
+    Returns 
+    -------
+    idim2_move : int 
+        1d index of the subvolume that needs to be shifted
+
+    dim2_move : float 
+        Distance by which the subvolume needs to be shifted, 
+        including sign. 
+
+    """
 
     if idim1==0:
         idim2_move = num_divs-1
@@ -144,8 +169,6 @@ class cube_grid():
 
     def __init__(self, x, y, z, Lbox, cell_size):
         """
-        Initialize the grid. 
-
         Parameters 
         ----------
         x, y, z : arrays
@@ -172,7 +195,7 @@ class cube_grid():
 
     def compute_cell_structure(self, x, y, z):
         """ 
-        Method divides the Lboxic box into regular, cubical subvolumes, and assigns a 
+        Method divides the periodic box into regular, cubical subvolumes, and assigns a 
         subvolume index to each point.  The returned arrays can be used to efficiently 
         access only those points in a given subvolume. 
 
