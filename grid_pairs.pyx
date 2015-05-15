@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # cython: profile=True
 
-
 from __future__ import print_function, division
 import numpy as np
 from numba import vectorize, double
@@ -9,6 +8,7 @@ cimport cython
 cimport numpy as np
 from libc.math cimport fabs, fmin
 import sys
+from cython.parallel cimport prange
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -64,9 +64,10 @@ def npairs(data1, data2, rbins, period=None):
     cdef np.ndarray[np.float64_t, ndim=1] x_icell1, y_icell1, z_icell1
     cdef np.ndarray[np.float64_t, ndim=1] x_icell2, y_icell2, z_icell2
     
+
     #Loop over all subvolumes in grid1
     for icell1 in range(grid1.num_divs**3):
-        calculate progress
+        #calculate progress
         progress = icell1/(grid1.num_divs**3)*100
         print("    {0:.2f} %%".format(progress),end='\r')
         sys.stdout.flush()
@@ -88,6 +89,7 @@ def npairs(data1, data2, rbins, period=None):
             x_icell2 = grid2.x[grid2.slice_array[icell2]]
             y_icell2 = grid2.y[grid2.slice_array[icell2]]
             z_icell2 = grid2.z[grid2.slice_array[icell2]]
+
             #loop over points in grid1's cell
             for i in range(0,len(x_icell1)):
                 #loop over points in grid2's cell
@@ -100,13 +102,13 @@ def npairs(data1, data2, rbins, period=None):
                     dz = fabs(z_icell1[i] - z_icell2[j])
                     dz = fmin(cperiod[2] - dz, dz)
                     d = dx*dx+dy*dy+dz*dz
-                    
+
                     #calculate counts in bins
-                    k = nbins-1
-                    while d<=crbins[k]:
-                        counts[k] += 1
-                        k=k-1
-                        if k<0: break
+                    #k = nbins-1
+                    #while d<=crbins[k]:
+                    #    counts[k] += 1
+                    #    k=k-1
+                    #    if k<0: break
     return counts
 
 
@@ -253,47 +255,3 @@ class cube_grid():
         return np.ravel_multi_index((ixgen, iygen, izgen), 
             (self.num_divs, self.num_divs, self.num_divs))
 
-    def adjacent_points(self, x, y, z, slice_array, *args): 
-        """ 
-        Return the set of all x, y, z points in the subvolumes 
-        including and neighboring the input subvolume.  
-
-        Parameters 
-        ----------
-        x, y, z : array_like 
-            coordinates of all points in the entire box 
-
-        slice_array : array_like 
-            Cell structure created by the `cell_structure` method. 
-
-        ix, iy, iz : integers, optional 
-            Integers specifying the ix, iy, and iz triplet of the subvolume. 
-            If ix, iy, and iz are not passed, then icell must be passed. 
-
-        icell : integer, optional
-            Integer specifying the cellID of the input subvolume
-            If icell is not passed, the ix, iy, and iz must be passed. 
-
-        Returns 
-        --------
-        adjx, adjy, adjz : array_like 
-            x, y, z coordinates of all points in the volumes 
-            including and neighboring the input subvolume. 
-
-        Notes 
-        ------
-        Method assumes x, y, and z have already been sorted according their cellID. 
-
-        """
-        if len(args) >= 3:
-            ix, iy, iz = args[0], args[1], args[2]
-            ic = np.ravel_multi_index(ix, iy, iz, self.num_divs)
-        elif len(args) == 1:
-            ic = args[0]
-
-        icells = self.adjacent_cells(ic)
-        adjx = np.concatenate([x[slice_array[i]] for i in icells])
-        adjy = np.concatenate([y[slice_array[i]] for i in icells])
-        adjz = np.concatenate([z[slice_array[i]] for i in icells])
-
-        return adjx, adjy, adjz
