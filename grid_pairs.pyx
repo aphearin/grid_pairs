@@ -45,7 +45,7 @@ def npairs(data1, data2, rbins, period=None):
     cdef int nbins = len(rbins)
     cdef np.ndarray[np.float64_t, ndim=1] crbins = np.ascontiguousarray(rbins,dtype=np.float64)
     cdef np.ndarray[np.float64_t, ndim=1] cperiod = np.ascontiguousarray(period,dtype=np.float64)
-    cdef np.ndarray[np.int_t, ndim=1] counts = np.ascontiguousarray(nbins,dtype=np.int)
+    cdef np.ndarray[np.int_t, ndim=1] counts = np.zeros(nbins,dtype=np.int)
     
     #build grids for data1 and data2
     grid1 = cube_grid(data1[0,:], data1[1,:], data1[2,:], np.max(period), np.max(rbins))
@@ -110,7 +110,7 @@ def npairs(data1, data2, rbins, period=None):
                     ### Simply updating the histogram dominates the runtime
                     k = nbins-1
                     while d<=crbins[k]:
-                        #counts[k] += 1
+                    #    #counts[k] += 1
                         k=k-1
                         if k<0: break
 
