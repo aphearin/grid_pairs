@@ -13,7 +13,7 @@ y = np.random.uniform(0, Lbox, Npts)
 z = np.random.uniform(0, Lbox, Npts)
 #rbins = np.logspace(-1, np.log10(24), 10)
 rbins = np.array([0,24])
-period = np.array([400.0,400.0,400.0])
+period = np.array([Lbox,Lbox,Lbox])
 data1 = np.vstack((x,y,z))
 
 start = time()
