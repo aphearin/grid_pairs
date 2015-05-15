@@ -6,13 +6,13 @@ from time import time
 import pstats, cProfile
 
 Lbox = 400.0
+rmax = 24
 
 Npts = 2e5
 x = np.random.uniform(0, Lbox, Npts)
 y = np.random.uniform(0, Lbox, Npts)
 z = np.random.uniform(0, Lbox, Npts)
-#rbins = np.logspace(-1, np.log10(24), 10)
-rbins = np.array([0,24])
+rbins = np.logspace(-1, np.log10(rmax), num=10)
 period = np.array([Lbox,Lbox,Lbox])
 data1 = np.vstack((x,y,z))
 

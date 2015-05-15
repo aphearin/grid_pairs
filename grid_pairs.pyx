@@ -98,11 +98,11 @@ def npairs(data1, data2, rbins, period=None):
                 #loop over points in grid2's cell
                 for j in range(0,len(x_icell2)):
                     #calculate the square distance
-                    dx = fabs(x_icell1[i] - x_icell2[j])
+                    dx = x_icell1[i] - x_icell2[j]
                     dx = fmin(cperiod[0] - dx, dx)
-                    dy = fabs(y_icell1[i] - y_icell2[j])
+                    dy = y_icell1[i] - y_icell2[j]
                     dy = fmin(cperiod[1] - dy, dy)
-                    dz = fabs(z_icell1[i] - z_icell2[j])
+                    dz = z_icell1[i] - z_icell2[j]
                     dz = fmin(cperiod[2] - dz, dz)
                     d = dx*dx+dy*dy+dz*dz
 
@@ -110,7 +110,7 @@ def npairs(data1, data2, rbins, period=None):
                     ### Simply updating the histogram dominates the runtime
                     k = nbins-1
                     while d<=crbins[k]:
-                    #    #counts[k] += 1
+                        counts[k] += 1
                         k=k-1
                         if k<0: break
 
