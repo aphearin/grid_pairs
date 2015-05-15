@@ -19,10 +19,10 @@ def npairs(data1, data2, rbins, Lbox):
     Parameters
     ----------
     data1: array_like
-        N by 3 array of spatial positions. 
+        3 by N array of spatial positions. 
             
     data2: array_like
-        N by 3 array of spatial positions. 
+        3 by N array of spatial positions. 
             
     rbins : array_like
         Array of boundaries defining the bins in which pairs are counted. 

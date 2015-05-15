@@ -6,22 +6,16 @@ from time import time
 import pstats, cProfile
 
 Lbox = 400.0
-rmax = 24
-
 Npts = 2e5
-x = np.random.uniform(0, Lbox, Npts)
-y = np.random.uniform(0, Lbox, Npts)
-z = np.random.uniform(0, Lbox, Npts)
+data1 = np.random.uniform(0, Lbox, Npts*3).reshape(3, Npts)
+
+rmax = 24
 rbins = np.logspace(-1, np.log10(rmax), num=10)
-data1 = np.vstack((x,y,z))
 
 start = time()
 result = npairs(data1,data1,rbins,Lbox)
 print result
 end = time()
 runtime = end-start
-print("Total runtime = %.1f seconds" % runtime)
+print("\nTotal runtime = %.1f seconds\n" % runtime)
 
-#cProfile.runctx("npairs(data1,data1,rbins,period=period)", globals(), locals(), "Profile.prof")
-#s = pstats.Stats("Profile.prof")
-#s.strip_dirs().sort_stats("time").print_stats()
