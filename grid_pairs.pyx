@@ -12,28 +12,24 @@ import sys
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.nonecheck(False)
-def npairs(data1, data2, rbins, period=None):
+def npairs(data1, data2, rbins, Lbox):
     """
     Calculate the number of pairs with separations less than or equal to rbins[i].
     
     Parameters
     ----------
     data1: array_like
-        N by k numpy array of k-dimensional positions. Should be between zero and 
-        period. This cython implementation requires data1.ndim==2.
+        N by 3 array of spatial positions. 
             
     data2: array_like
-        N by k numpy array of k-dimensional positions. Should be between zero and 
-        period. This cython implementation requires data2.ndim==2.
+        N by 3 array of spatial positions. 
             
     rbins : array_like
-        numpy array of boundaries defining the bins in which pairs are counted. 
+        Array of boundaries defining the bins in which pairs are counted. 
         len(rbins) = Nrbins + 1.
             
-    period: array_like, optional
-        length k array defining axis-aligned periodic boundary conditions. If only 
-        one number, Lbox, is specified, period is assumed to be np.array([Lbox]*k).
-        If none, PBCs are set to infinity.
+    Lbox: float 
+        Size of the periodic box. 
             
     Returns
     -------
@@ -44,16 +40,11 @@ def npairs(data1, data2, rbins, period=None):
     #c definitions
     cdef int nbins = len(rbins)
     cdef np.ndarray[np.float64_t, ndim=1] crbins = np.ascontiguousarray(rbins,dtype=np.float64)
-    cdef np.ndarray[np.float64_t, ndim=1] cperiod = np.ascontiguousarray(period,dtype=np.float64)
     cdef np.ndarray[np.int_t, ndim=1] counts = np.zeros(nbins,dtype=np.int)
     
     #build grids for data1 and data2
-    grid1 = cube_grid(data1[0,:], data1[1,:], data1[2,:], np.max(period), np.max(rbins))
-    grid2 = cube_grid(data2[0,:], data2[1,:], data2[2,:], np.max(period), np.max(rbins))
-
-    # Create array for temporarily storing distance calculation results
-    # ( Currently not being used)
-    #cdef np.ndarray[np.float64_t, ndim=1] distance_holder = np.zeros(len(data1[0,:]), dtype=np.float64)
+    grid1 = cube_grid(data1[0,:], data1[1,:], data1[2,:], Lbox, np.max(rbins))
+    grid2 = cube_grid(data2[0,:], data2[1,:], data2[2,:], Lbox, np.max(rbins))
 
     #square radial bins
     crbins = crbins**2.0
@@ -86,9 +77,10 @@ def npairs(data1, data2, rbins, period=None):
                                               grid1.num_divs))
         adj_cell_arr = grid1.adjacent_cells(ix, iy, iz)
 
-        ix2_move, x2_move = shift_subvolume(ix, grid1.num_divs, cperiod[0])
-        iy2_move, y2_move = shift_subvolume(iy, grid1.num_divs, cperiod[1])
-        iz2_move, z2_move = shift_subvolume(iz, grid1.num_divs, cperiod[2])
+        # Compute the cells that will need to be shifted to respect PBCs
+        ix2_move, x2_move = shift_subvolume(ix, grid1.num_divs, Lbox)
+        iy2_move, y2_move = shift_subvolume(iy, grid1.num_divs, Lbox)
+        iz2_move, z2_move = shift_subvolume(iz, grid1.num_divs, Lbox)
 
         
         #Loop over each of the 27 subvolumes neighboring, including the current cell.
@@ -119,13 +111,13 @@ def npairs(data1, data2, rbins, period=None):
                     dx = x_icell1[i] - x_icell2[j]
                     dy = y_icell1[i] - y_icell2[j]
                     dz = z_icell1[i] - z_icell2[j]
-                    
-                    d = dx*dx+dy*dy+dz*dz
+
+                    dsq = dx*dx+dy*dy+dz*dz
 
                     ### Calculate counts in bins
                     ### Simply updating the histogram dominates the runtime
                     k = nbins-1
-                    while d<=crbins[k]:
+                    while dsq<=crbins[k]:
                         counts[k] += 1
                         k=k-1
                         if k<0: break
@@ -133,14 +125,14 @@ def npairs(data1, data2, rbins, period=None):
     return counts
 
 
-def shift_subvolume(idim1, num_divs, period):
+def shift_subvolume(idim1, num_divs, Lbox):
 
     if idim1==0:
         idim2_move = num_divs-1
-        dim2_move = -period
+        dim2_move = -Lbox
     elif idim1==num_divs-1:
         idim2_move = 0
-        dim2_move = period
+        dim2_move = Lbox
     else:
         idim2_move = -1
         dim2_move = 0
@@ -160,7 +152,7 @@ class cube_grid():
             Length-Npts arrays containing the spatial position of the Npts points. 
         
         Lbox : float
-            Length scale defining the periodic boundary conditions
+            Length scale defining the Lboxic boundary conditions
 
         cell_size : float 
             The approximate cell size into which the box will be divided. 
@@ -180,7 +172,7 @@ class cube_grid():
 
     def compute_cell_structure(self, x, y, z):
         """ 
-        Method divides the periodic box into regular, cubical subvolumes, and assigns a 
+        Method divides the Lboxic box into regular, cubical subvolumes, and assigns a 
         subvolume index to each point.  The returned arrays can be used to efficiently 
         access only those points in a given subvolume. 
 

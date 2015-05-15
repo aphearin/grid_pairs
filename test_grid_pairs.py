@@ -13,11 +13,10 @@ x = np.random.uniform(0, Lbox, Npts)
 y = np.random.uniform(0, Lbox, Npts)
 z = np.random.uniform(0, Lbox, Npts)
 rbins = np.logspace(-1, np.log10(rmax), num=10)
-period = np.array([Lbox,Lbox,Lbox])
 data1 = np.vstack((x,y,z))
 
 start = time()
-result = npairs(data1,data1,rbins,period=period)
+result = npairs(data1,data1,rbins,Lbox)
 print result
 end = time()
 runtime = end-start
