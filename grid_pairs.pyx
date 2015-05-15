@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# cython: profile=False
+# cython: profile=True
 
 
 from __future__ import print_function, division
@@ -66,7 +66,7 @@ def npairs(data1, data2, rbins, period=None):
     
     #Loop over all subvolumes in grid1
     for icell1 in range(grid1.num_divs**3):
-        #calculate progress
+        calculate progress
         progress = icell1/(grid1.num_divs**3)*100
         print("    {0:.2f} %%".format(progress),end='\r')
         sys.stdout.flush()
@@ -100,6 +100,7 @@ def npairs(data1, data2, rbins, period=None):
                     dz = fabs(z_icell1[i] - z_icell2[j])
                     dz = fmin(cperiod[2] - dz, dz)
                     d = dx*dx+dy*dy+dz*dz
+                    
                     #calculate counts in bins
                     k = nbins-1
                     while d<=crbins[k]:
@@ -113,10 +114,13 @@ class cube_grid():
 
     def __init__(self, x, y, z, Lbox, cell_size):
         """
-        Initialize the grid the grid. 
+        Initialize the grid. 
 
         Parameters 
         ----------
+        x, y, z : arrays
+            Length-Npts arrays containing the spatial position of the Npts points. 
+        
         Lbox : float
             Length scale defining the periodic boundary conditions
 
